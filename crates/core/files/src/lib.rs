@@ -9,7 +9,7 @@ use revolt_config::{config, report_internal_error, FilesS3};
 use revolt_result::{create_error, Result};
 
 use aws_sdk_s3::{
-    config::{Credentials, Region},
+    config::{Credentials, Region, RequestChecksumCalculation},
     Client, Config,
 };
 
@@ -36,6 +36,7 @@ pub fn create_client(s3_config: FilesS3) -> Client {
         .endpoint_url(s3_config.endpoint)
         .force_path_style(s3_config.path_style_buckets)
         .credentials_provider(creds)
+        .request_checksum_calculation(RequestChecksumCalculation::WhenRequired)
         .build();
 
     Client::from_conf(config)
