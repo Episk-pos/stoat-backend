@@ -215,18 +215,17 @@ pub async fn ingress(
             // TODO: figure out how to track audio stream quality
 
             if event.event == "track_published"
-                && (track.r#type == TrackType::Data as i32
-                    || (track.r#type == TrackType::Video as i32
-                        && (user_limits.video_resolution[0] != 0
-                            && user_limits.video_resolution[1] != 0
-                            && track.width * track.height
-                                > user_limits.video_resolution[0]
-                                    * user_limits.video_resolution[1])
-                        || (user_limits.video_aspect_ratio[0]
-                            != user_limits.video_aspect_ratio[1]
-                            && !(user_limits.video_aspect_ratio[0]
-                                ..=user_limits.video_aspect_ratio[1])
-                                .contains(&(track.width as f32 / track.height as f32)))))
+                && track.r#type == TrackType::Video as i32
+                && ((user_limits.video_resolution[0] != 0
+                    && user_limits.video_resolution[1] != 0
+                    && track.width * track.height
+                        > user_limits.video_resolution[0]
+                            * user_limits.video_resolution[1])
+                    || (user_limits.video_aspect_ratio[0]
+                        != user_limits.video_aspect_ratio[1]
+                        && !(user_limits.video_aspect_ratio[0]
+                            ..=user_limits.video_aspect_ratio[1])
+                            .contains(&(track.width as f32 / track.height as f32))))
             {
                 voice_client.remove_user(node, user_id, channel_id).await?;
                 delete_voice_state(channel_id, channel.server(), user_id).await?;
