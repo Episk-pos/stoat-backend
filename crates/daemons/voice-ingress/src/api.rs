@@ -218,6 +218,8 @@ pub async fn ingress(
 
             if event.event == "track_published"
                 && track.r#type == TrackType::Video as i32
+                && track.width > 0
+                && track.height > 0
                 && ((user_limits.video_resolution[0] != 0
                     && user_limits.video_resolution[1] != 0
                     && track.width * track.height
