@@ -216,6 +216,14 @@ pub async fn ingress(
             // forbid any size which goes over the limit and also limit the aspect ratio to stop people from making too tall or too wide and bypassing the limit.
             // TODO: figure out how to track audio stream quality
 
+            if event.event == "track_published" && track.r#type == TrackType::Video as i32 {
+                log::info!(
+                    "video track dimensions: {}x{}, user limits: resolution={:?}, aspect_ratio={:?}",
+                    track.width, track.height,
+                    user_limits.video_resolution, user_limits.video_aspect_ratio
+                );
+            }
+
             if event.event == "track_published"
                 && track.r#type == TrackType::Video as i32
                 && track.width > 0
