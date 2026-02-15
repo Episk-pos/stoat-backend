@@ -137,7 +137,7 @@ impl Database {
                                 .api
                                 .smtp
                                 .reply_to
-                                .unwrap_or("support@revolt.chat".into()),
+                                .unwrap_or("support@stoat.chat".into()),
                         ),
                         port: config.api.smtp.port,
                         use_tls: config.api.smtp.use_tls,

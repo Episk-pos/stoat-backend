@@ -95,7 +95,7 @@ impl TestHarness {
     pub async fn account_from_user(&self, id: String) -> (Account, Session) {
         let account = Account {
             id,
-            email: format!("{}@revolt.chat", TestHarness::rand_string()),
+            email: format!("{}@stoat.chat", TestHarness::rand_string()),
             password: Default::default(),
             email_normalised: Default::default(),
             deletion: None,
