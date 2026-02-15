@@ -21,10 +21,8 @@ lazy_static! {
         .timeout(Duration::from_secs(10)) // TODO config
         .connect_timeout(Duration::from_secs(5)) // TODO config
         .redirect(redirect::Policy::custom(|attempt| {
-            if attempt.previous().len() > 5 { // TODO config
+            if attempt.previous().len() > 5 {
                 attempt.error("too many redirects")
-            } else if attempt.url().host_str() == Some("jan.revolt.chat") { // TODO config
-                attempt.stop()
             } else {
                 attempt.follow()
             }
