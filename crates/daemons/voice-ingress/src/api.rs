@@ -30,7 +30,7 @@ pub async fn ingress(
     auth_header: AuthHeader<'_>,
     body: &str,
 ) -> Result<EmptyResponse> {
-    log::debug!("received event: {body:?}");
+    log::debug!("received event body: {body:?}");
 
     let config = revolt_config::config().await;
 
@@ -52,6 +52,8 @@ pub async fn ingress(
     let event = webhook_receiver
         .receive(body, &auth_header)
         .to_internal_error()?;
+
+    log::info!("processing webhook event: {}", &event.event);
 
     let channel_id = event.room.as_ref().map(|r| &r.name);
     let user_id = event.participant.as_ref().map(|r| &r.identity);
@@ -135,8 +137,8 @@ pub async fn ingress(
                 }
             }
         }
-        // User left a channel
-        "participant_left" => {
+        // User left a channel (or WebRTC connection aborted, e.g. ICE failure)
+        "participant_left" | "participant_connection_aborted" => {
             let channel_id = channel_id.to_internal_error()?;
             let user_id = user_id.to_internal_error()?;
 
