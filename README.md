@@ -161,12 +161,13 @@ You can start a web client by doing the following:
 corepack enable
 
 # clone the web client and run it:
-git clone --recursive https://github.com/revoltchat/revite
-cd revite
-yarn
-yarn build:deps
-echo "VITE_API_URL=http://local.stoat.chat:14702" > .env.local
-yarn dev --port 14701
+git clone --recursive https://github.com/stoatchat/for-web client
+cd client
+mise install:frozen
+mise build:deps
+cp packages/client/.env.example packages/client/.env
+# Update VITE_API_URL in packages/client/.env
+mise dev
 ```
 
 Then go to http://local.stoat.chat:14701 to create an account/login.
