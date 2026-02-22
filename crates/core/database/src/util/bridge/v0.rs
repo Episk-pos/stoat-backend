@@ -1035,6 +1035,7 @@ impl crate::User {
             },
             flags: self.flags.unwrap_or_default() as u32,
             privileged: self.privileged,
+            friend_only_dms: self.friend_only_dms,
             bot: self.bot.map(|bot| bot.into()),
             relationship,
             id: self.id,
@@ -1099,6 +1100,7 @@ impl crate::User {
             },
             flags: self.flags.unwrap_or_default() as u32,
             privileged: self.privileged,
+            friend_only_dms: self.friend_only_dms,
             bot: self.bot.map(|bot| bot.into()),
             relationship,
             id: self.id,
@@ -1127,6 +1129,7 @@ impl crate::User {
             status: self.status.and_then(|status| status.into(true)),
             flags: self.flags.unwrap_or_default() as u32,
             privileged: self.privileged,
+            friend_only_dms: self.friend_only_dms,
             bot: self.bot.map(|bot| bot.into()),
             relationship: RelationshipStatus::None, // events client will populate this from cache
             id: self.id,
@@ -1162,6 +1165,7 @@ impl crate::User {
             status: self.status.and_then(|status| status.into(true)),
             flags: self.flags.unwrap_or_default() as u32,
             privileged: self.privileged,
+            friend_only_dms: self.friend_only_dms,
             bot: self.bot.map(|bot| bot.into()),
             relationship: RelationshipStatus::User,
             id: self.id,
@@ -1190,6 +1194,7 @@ impl From<User> for crate::User {
             profile: None,
             flags: Some(value.flags as i32),
             privileged: value.privileged,
+            friend_only_dms: value.friend_only_dms,
             bot: value.bot.map(Into::into),
             suspended_until: None,
             last_acknowledged_policy_change: Timestamp::UNIX_EPOCH,
@@ -1214,6 +1219,7 @@ impl From<crate::PartialUser> for PartialUser {
             status: value.status.and_then(|status| status.into(false)),
             flags: value.flags.map(|flags| flags as u32),
             privileged: value.privileged,
+            friend_only_dms: value.friend_only_dms,
             bot: value.bot.map(|bot| bot.into()),
             relationship: None,
             online: None,
@@ -1231,6 +1237,7 @@ impl From<FieldsUser> for crate::FieldsUser {
             FieldsUser::StatusPresence => crate::FieldsUser::StatusPresence,
             FieldsUser::StatusText => crate::FieldsUser::StatusText,
             FieldsUser::DisplayName => crate::FieldsUser::DisplayName,
+            FieldsUser::FriendOnlyDms => crate::FieldsUser::FriendOnlyDms,
 
             FieldsUser::Internal => crate::FieldsUser::None,
         }
@@ -1246,6 +1253,7 @@ impl From<crate::FieldsUser> for FieldsUser {
             crate::FieldsUser::StatusPresence => FieldsUser::StatusPresence,
             crate::FieldsUser::StatusText => FieldsUser::StatusText,
             crate::FieldsUser::DisplayName => FieldsUser::DisplayName,
+            crate::FieldsUser::FriendOnlyDms => FieldsUser::FriendOnlyDms,
 
             crate::FieldsUser::Suspension => FieldsUser::Internal,
             crate::FieldsUser::None => FieldsUser::Internal,

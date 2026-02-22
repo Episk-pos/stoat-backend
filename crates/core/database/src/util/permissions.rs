@@ -92,6 +92,15 @@ impl PermissionQuery for DatabasePermissionQuery<'_> {
         }
     }
 
+    /// Does the target user only accept DMs from friends?
+    async fn target_has_friend_only_dms(&mut self) -> bool {
+        if let Some(other_user) = &self.user {
+            other_user.friend_only_dms
+        } else {
+            false
+        }
+    }
+
     /// Do we have a mutual connection with the currently selected user?
     async fn have_mutual_connection(&mut self) -> bool {
         if let Some(value) = self.cached_mutual_connection {

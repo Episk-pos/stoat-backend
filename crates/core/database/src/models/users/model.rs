@@ -54,6 +54,10 @@ auto_derived_partial!(
         #[serde(skip_serializing_if = "Option::is_none")]
         pub bot: Option<BotInformation>,
 
+        /// Whether this user only accepts DMs from friends
+        #[serde(skip_serializing_if = "crate::if_false", default)]
+        pub friend_only_dms: bool,
+
         /// Time until user is unsuspended
         #[serde(skip_serializing_if = "Option::is_none")]
         pub suspended_until: Option<Timestamp>,
@@ -72,6 +76,7 @@ auto_derived!(
         ProfileContent,
         ProfileBackground,
         DisplayName,
+        FriendOnlyDms,
 
         // internal fields
         Suspension,
@@ -179,6 +184,7 @@ impl Default for User {
             flags: Default::default(),
             privileged: Default::default(),
             bot: Default::default(),
+            friend_only_dms: Default::default(),
             suspended_until: Default::default(),
             last_acknowledged_policy_change: Timestamp::UNIX_EPOCH,
         }
@@ -690,6 +696,7 @@ impl User {
                 }
             }
             FieldsUser::DisplayName => self.display_name = None,
+            FieldsUser::FriendOnlyDms => self.friend_only_dms = false,
             FieldsUser::Suspension => self.suspended_until = None,
             FieldsUser::None => {}
         }

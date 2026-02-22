@@ -29,10 +29,10 @@ pub async fn create_group(
 
     for target in &data.users {
         match user.relationship_with(target) {
-            RelationshipStatus::Friend | RelationshipStatus::User => {}
-            _ => {
-                return Err(create_error!(NotFriends));
+            RelationshipStatus::Blocked | RelationshipStatus::BlockedOther => {
+                return Err(create_error!(Blocked));
             }
+            _ => {}
         }
     }
 

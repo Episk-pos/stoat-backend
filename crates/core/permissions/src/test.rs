@@ -44,6 +44,10 @@ async fn validate_user_permissions() {
             false
         }
 
+        async fn target_has_friend_only_dms(&mut self) -> bool {
+            false
+        }
+
         async fn are_we_server_owner(&mut self) -> bool {
             unreachable!()
         }
@@ -138,6 +142,10 @@ async fn validate_group_permissions() {
         }
 
         async fn have_mutual_connection(&mut self) -> bool {
+            unreachable!()
+        }
+
+        async fn target_has_friend_only_dms(&mut self) -> bool {
             unreachable!()
         }
 
@@ -245,6 +253,10 @@ async fn validate_server_permissions() {
             unreachable!()
         }
 
+        async fn target_has_friend_only_dms(&mut self) -> bool {
+            unreachable!()
+        }
+
         async fn are_we_server_owner(&mut self) -> bool {
             false
         }
@@ -347,6 +359,10 @@ async fn validate_timed_out_member() {
         }
 
         async fn have_mutual_connection(&mut self) -> bool {
+            unreachable!()
+        }
+
+        async fn target_has_friend_only_dms(&mut self) -> bool {
             unreachable!()
         }
 

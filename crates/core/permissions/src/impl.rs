@@ -14,35 +14,30 @@ pub async fn calculate_user_permissions<P: PermissionQuery>(query: &mut P) -> Pe
         return u64::MAX.into();
     }
 
-    let mut permissions = 0_u64;
     match query.user_relationship().await {
         RelationshipStatus::Friend => return u64::MAX.into(),
         RelationshipStatus::Blocked | RelationshipStatus::BlockedOther => {
             return (UserPermission::Access as u64).into()
         }
-        RelationshipStatus::Incoming | RelationshipStatus::Outgoing => {
-            permissions = UserPermission::Access as u64;
-        }
         _ => {}
     }
 
-    if query.have_mutual_connection().await {
-        permissions = UserPermission::Access as u64 + UserPermission::ViewProfile as u64;
+    // Base permissions for non-friend, non-blocked users
+    let mut permissions = UserPermission::Access as u64 | UserPermission::ViewProfile as u64;
 
-        if query.user_is_bot().await || query.are_we_a_bot().await {
-            permissions += UserPermission::SendMessage as u64;
-        }
-
-        permissions.into()
-    } else {
-        permissions.into()
+    // Grant SendMessage unless the target has restricted DMs to friends only
+    if !query.target_has_friend_only_dms().await {
+        permissions |= UserPermission::SendMessage as u64;
     }
 
-    // TODO: add boolean switch for permission for users to globally message a user
-    // maybe an enum?
-    // PrivacyLevel { Private, Friends, Mutual, Public, Global }
+    // Bots always get SendMessage if there's a mutual connection
+    if query.have_mutual_connection().await
+        && (query.user_is_bot().await || query.are_we_a_bot().await)
+    {
+        permissions |= UserPermission::SendMessage as u64;
+    }
 
-    // TODO: add boolean switch for permission for users to mutually DM a user
+    permissions.into()
 }
 
 /// Calculate permissions against a server

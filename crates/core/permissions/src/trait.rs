@@ -22,6 +22,9 @@ pub trait PermissionQuery {
     /// Do we have a mutual connection with the currently selected user?
     async fn have_mutual_connection(&mut self) -> bool;
 
+    /// Does the target user only accept DMs from friends?
+    async fn target_has_friend_only_dms(&mut self) -> bool;
+
     // * For calculating server permission
 
     /// Is our perspective user the server's owner?

@@ -53,6 +53,7 @@ pub async fn edit(
         && data.avatar.is_none()
         && data.badges.is_none()
         && data.flags.is_none()
+        && data.friend_only_dms.is_none()
         && data.remove.is_empty()
     {
         return Ok(Json(user.into_self(false).await));
@@ -82,6 +83,7 @@ pub async fn edit(
         display_name: data.display_name,
         badges: data.badges,
         flags: data.flags,
+        friend_only_dms: data.friend_only_dms,
         ..Default::default()
     };
 

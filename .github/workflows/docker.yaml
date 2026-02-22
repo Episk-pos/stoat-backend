@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "*"
+    branches:
+      - "staging"
   pull_request:
     paths:
       - "Dockerfile"
@@ -66,7 +68,7 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/${{ github.repository_owner }}/base:latest
+          tags: ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
 
       # stoatchat/api
       - name: Docker meta
@@ -75,6 +77,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/api
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -84,7 +89,7 @@ jobs:
           file: crates/delta/Dockerfile
           tags: ${{ steps.meta-delta.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-delta.outputs.labels }}
 
       # stoatchat/events
@@ -94,6 +99,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/events
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -103,7 +111,7 @@ jobs:
           file: crates/bonfire/Dockerfile
           tags: ${{ steps.meta-bonfire.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-bonfire.outputs.labels }}
 
       # stoatchat/file-server
@@ -113,6 +121,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/file-server
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -122,7 +133,7 @@ jobs:
           file: crates/services/autumn/Dockerfile
           tags: ${{ steps.meta-autumn.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-autumn.outputs.labels }}
 
       # stoatchat/proxy
@@ -132,6 +143,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/proxy
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -141,7 +155,7 @@ jobs:
           file: crates/services/january/Dockerfile
           tags: ${{ steps.meta-january.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-january.outputs.labels }}
 
       # stoatchat/gifbox
@@ -151,6 +165,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/gifbox
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -160,7 +177,7 @@ jobs:
           file: crates/services/gifbox/Dockerfile
           tags: ${{ steps.meta-gifbox.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-gifbox.outputs.labels }}
 
       # stoatchat/crond
@@ -170,6 +187,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/crond
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -179,7 +199,7 @@ jobs:
           file: crates/daemons/crond/Dockerfile
           tags: ${{ steps.meta-crond.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-crond.outputs.labels }}
 
       # stoatchat/pushd
@@ -189,6 +209,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/pushd
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -198,7 +221,7 @@ jobs:
           file: crates/daemons/pushd/Dockerfile
           tags: ${{ steps.meta-pushd.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-pushd.outputs.labels }}
 
       # stoatchat/voice-ingress
@@ -208,6 +231,9 @@ jobs:
         with:
           images: |
             ghcr.io/stoatchat/voice-ingress
+          tags: |
+            type=ref,event=tag
+            type=raw,value=staging-{{sha}},enable=${{ github.ref_name == 'staging' }}
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -217,5 +243,5 @@ jobs:
           file: crates/daemons/voice-ingress/Dockerfile
           tags: ${{ steps.meta-voice-ingress.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:latest
+            BASE_IMAGE=ghcr.io/${{ github.repository_owner }}/base:${{ github.ref_name == 'staging' && format('staging-{0}', github.sha) || 'latest' }}
           labels: ${{ steps.meta-voice-ingress.outputs.labels }}

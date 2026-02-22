@@ -1,6 +1,6 @@
 use revolt_database::{
     util::{permissions::DatabasePermissionQuery, reference::Reference},
-    Channel, Database, User, AMQP,
+    Channel, Database, RelationshipStatus, User, AMQP,
 };
 use revolt_permissions::{calculate_channel_permissions, ChannelPermission};
 use revolt_result::{create_error, Result};
@@ -32,10 +32,13 @@ pub async fn add_member(
 
     match &channel {
         Channel::Group { .. } => {
-            // TODO: use permissions here? interesting if users could block new group invites
             let member = member_id.as_user(db).await?;
-            if !user.is_friends_with(&member.id) {
-                return Err(create_error!(NotFriends));
+            let relationship = user.relationship_with(&member.id);
+            if matches!(
+                relationship,
+                RelationshipStatus::Blocked | RelationshipStatus::BlockedOther
+            ) {
+                return Err(create_error!(Blocked));
             }
 
             channel
@@ -126,10 +129,51 @@ mod test {
     }
 
     #[rocket::async_test]
-    async fn fail_add_non_friend() {
+    async fn success_add_non_friend() {
         let harness = TestHarness::new().await;
         let (_, session, user) = harness.new_user().await;
         let (_, _, other_user) = harness.new_user().await;
+
+        let group = Channel::create_group(
+            &harness.db,
+            v0::DataCreateGroup {
+                name: TestHarness::rand_string(),
+                ..Default::default()
+            },
+            user.id.to_string(),
+        )
+        .await
+        .unwrap();
+
+        let response = harness
+            .client
+            .put(format!(
+                "/channels/{}/recipients/{}",
+                group.id(),
+                other_user.id
+            ))
+            .header(Header::new("x-session-token", session.token.to_string()))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::NoContent);
+    }
+
+    #[rocket::async_test]
+    async fn fail_add_blocked_user() {
+        let mut harness = TestHarness::new().await;
+        let (_, session, mut user) = harness.new_user().await;
+        let (_, _, mut other_user) = harness.new_user().await;
+
+        #[allow(clippy::disallowed_methods)]
+        user.apply_relationship(
+            &harness.db,
+            &mut other_user,
+            RelationshipStatus::Blocked,
+            RelationshipStatus::BlockedOther,
+        )
+        .await
+        .unwrap();
 
         let group = Channel::create_group(
             &harness.db,

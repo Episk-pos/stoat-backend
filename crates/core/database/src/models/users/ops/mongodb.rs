@@ -368,6 +368,7 @@ impl IntoDocumentPath for FieldsUser {
             FieldsUser::StatusPresence => "status.presence",
             FieldsUser::StatusText => "status.text",
             FieldsUser::DisplayName => "display_name",
+            FieldsUser::FriendOnlyDms => "friend_only_dms",
             FieldsUser::Suspension => "suspended_until",
             FieldsUser::None => "none",
         })

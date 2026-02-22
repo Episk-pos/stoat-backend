@@ -68,6 +68,12 @@ auto_derived_partial!(
             serde(skip_serializing_if = "crate::if_false", default)
         )]
         pub privileged: bool,
+        /// Whether this user only accepts DMs from friends
+        #[cfg_attr(
+            feature = "serde",
+            serde(skip_serializing_if = "crate::if_false", default)
+        )]
+        pub friend_only_dms: bool,
         /// Bot information
         #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         pub bot: Option<BotInformation>,
@@ -89,6 +95,7 @@ auto_derived!(
         ProfileContent,
         ProfileBackground,
         DisplayName,
+        FriendOnlyDms,
 
         /// Internal field, ignore this.
         Internal,
@@ -244,6 +251,9 @@ auto_derived!(
         /// Enum of user flags
         #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         pub flags: Option<i32>,
+
+        /// Whether to only accept DMs from friends
+        pub friend_only_dms: Option<bool>,
 
         /// Fields to remove from user object
         #[cfg_attr(feature = "serde", serde(default))]
