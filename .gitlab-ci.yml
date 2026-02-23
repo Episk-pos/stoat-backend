@@ -1,0 +1,56 @@
+stages:
+  - publish
+
+publish:
+  stage: publish
+  image: docker:27
+  services:
+    - name: docker:27-dind
+      variables:
+        DOCKER_TLS_CERTDIR: ""
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_BUILDKIT: "1"
+    # DinD service needs high resources for Rust compilation
+    KUBERNETES_SERVICE_CPU_REQUEST: "2"
+    KUBERNETES_SERVICE_MEMORY_REQUEST: "8Gi"
+    KUBERNETES_SERVICE_MEMORY_LIMIT: "12Gi"
+  timeout: 3h
+  before_script:
+    - until docker info >/dev/null 2>&1; do sleep 1; done
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export IMAGE_TAG="$CI_COMMIT_TAG"
+      else
+        export IMAGE_TAG="staging-${CI_COMMIT_SHORT_SHA}"
+      fi
+      echo "Image tag: $IMAGE_TAG"
+  script:
+    - |
+      # Build base image (Rust workspace compilation — the heavy step)
+      echo "=== Building base image ==="
+      docker build -t "$CI_REGISTRY_IMAGE/base:$IMAGE_TAG" .
+      # Tag locally so per-crate Dockerfiles resolve their FROM line
+      docker tag "$CI_REGISTRY_IMAGE/base:$IMAGE_TAG" ghcr.io/stoatchat/base:latest
+      docker push "$CI_REGISTRY_IMAGE/base:$IMAGE_TAG"
+
+      # Build and push all service images (quick — just COPY from base)
+      build_service() {
+        local name=$1 dockerfile=$2
+        echo "=== Building $name ==="
+        docker build -t "$CI_REGISTRY_IMAGE/$name:$IMAGE_TAG" -f "$dockerfile" .
+        docker push "$CI_REGISTRY_IMAGE/$name:$IMAGE_TAG"
+      }
+
+      build_service api           crates/delta/Dockerfile
+      build_service events        crates/bonfire/Dockerfile
+      build_service file-server   crates/services/autumn/Dockerfile
+      build_service proxy         crates/services/january/Dockerfile
+      build_service gifbox        crates/services/gifbox/Dockerfile
+      build_service crond         crates/daemons/crond/Dockerfile
+      build_service pushd         crates/daemons/pushd/Dockerfile
+      build_service voice-ingress crates/daemons/voice-ingress/Dockerfile
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+    - if: $CI_COMMIT_TAG
