@@ -32,6 +32,7 @@ use sentry::Level;
 
 use crate::config::{ProtocolConfiguration, WebsocketHandshakeCallback};
 use crate::events::state::{State, SubscriptionStateChange};
+use crate::metrics;
 
 type WsReader = SplitStream<WebSocketStream<TcpStream>>;
 type WsWriter = SplitSink<WebSocketStream<TcpStream>, async_tungstenite::tungstenite::Message>;
@@ -39,6 +40,11 @@ type WsWriter = SplitSink<WebSocketStream<TcpStream>, async_tungstenite::tungste
 /// Start a new WebSocket client worker given access to the database,
 /// the relevant TCP stream and the remote address of the client.
 pub async fn client(db: &'static Database, stream: TcpStream, addr: SocketAddr) {
+    // Track connection metrics
+    metrics::WEBSOCKET_CONNECTIONS_TOTAL.inc();
+    metrics::WEBSOCKET_CONNECTIONS_ACTIVE.inc();
+    let connection_start = std::time::Instant::now();
+
     // Upgrade the TCP connection to a WebSocket connection.
     // In this process, we also parse any additional parameters given.
     // e.g. wss://example.com?format=json&version=1
@@ -89,8 +95,12 @@ pub async fn client(db: &'static Database, stream: TcpStream, addr: SocketAddr) 
     };
 
     let (user, session_id) = match User::from_token(db, token, UserHint::Any).await {
-        Ok(user) => user,
+        Ok(user) => {
+            metrics::WEBSOCKET_AUTHENTICATION_TOTAL.with_label_values(&["success"]).inc();
+            user
+        }
         Err(err) => {
+            metrics::WEBSOCKET_AUTHENTICATION_TOTAL.with_label_values(&["failure"]).inc();
             write
                 .send(config.encode(&EventV1::Error { data: err }))
                 .await
@@ -183,6 +193,11 @@ pub async fn client(db: &'static Database, stream: TcpStream, addr: SocketAddr) 
     if last_session {
         state.broadcast_presence_change(false).await;
     }
+
+    // Track connection end metrics
+    metrics::WEBSOCKET_CONNECTIONS_ACTIVE.dec();
+    let connection_duration = connection_start.elapsed().as_secs_f64();
+    metrics::WEBSOCKET_CONNECTION_DURATION_SECONDS.observe(connection_duration);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -335,6 +350,18 @@ async fn listener(
                     break 'out;
                 };
 
+                // Track Redis event type
+                let event_type = match &event {
+                    EventV1::Auth(_) => "auth",
+                    EventV1::Logout => "logout",
+                    EventV1::Authenticated => "authenticated",
+                    EventV1::Ready { .. } => "ready",
+                    EventV1::Pong { .. } => "pong",
+                    EventV1::Error { .. } => "error",
+                    _ => "other",
+                };
+                metrics::REDIS_EVENTS_TOTAL.with_label_values(&[event_type]).inc();
+
                 if let EventV1::Auth(auth) = &event {
                     if let AuthifierEvent::DeleteSession { session_id, .. } = auth {
                         if &state.session_id == session_id {
@@ -359,7 +386,16 @@ async fn listener(
                     }
                 }
 
-                let result = write.lock().await.send(config.encode(&event)).await;
+                let encoded_event = config.encode(&event);
+                let message_size = encoded_event.len() as f64;
+                metrics::WEBSOCKET_MESSAGES_TOTAL
+                    .with_label_values(&["outbound", "event"])
+                    .inc();
+                metrics::WEBSOCKET_MESSAGE_SIZE_BYTES
+                    .with_label_values(&["outbound"])
+                    .observe(message_size);
+
+                let result = write.lock().await.send(encoded_event).await;
                 if let Err(e) = result {
                     use async_tungstenite::tungstenite::Error;
                     if !matches!(e, Error::AlreadyClosed | Error::ConnectionClosed) {
@@ -452,9 +488,25 @@ async fn worker(
                     }
                 };
 
+                let message_size = msg.len() as f64;
+                metrics::WEBSOCKET_MESSAGE_SIZE_BYTES
+                    .with_label_values(&["inbound"])
+                    .observe(message_size);
+
                 let Ok(payload) = config.decode(&msg) else {
                     continue;
                 };
+
+                let message_type = match &payload {
+                    ClientMessage::BeginTyping { .. } => "begin_typing",
+                    ClientMessage::EndTyping { .. } => "end_typing",
+                    ClientMessage::Subscribe { .. } => "subscribe",
+                    ClientMessage::Ping { .. } => "ping",
+                    ClientMessage::Authenticate { .. } => "authenticate",
+                };
+                metrics::WEBSOCKET_MESSAGES_TOTAL
+                    .with_label_values(&["inbound", message_type])
+                    .inc();
 
                 match payload {
                     ClientMessage::BeginTyping { .. } => {}

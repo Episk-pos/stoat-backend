@@ -18,6 +18,10 @@ redis-kiss = "0.1.4"
 lru_time_cache = "0.11.11"
 async-channel = "2.3.1"
 
+# metrics
+prometheus = "0.13"
+lazy_static = "1.4"
+
 # parsing
 querystring = "1.1.0"
 regex = "1.11.1"
